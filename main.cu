@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 	/* Device arrays */
 	PIXEL* d_pixels_in;
 	cudaMalloc(&d_pixels_in, size);
-	cudaMemCopy(d_pixels_in, gpixels, size, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_pixels_in, gpixels, size, cudaMemcpyHostToDevice);
 
 	PIXEL* d_pixels_out;
 	cudaMalloc(&d_pixels_out, size);
@@ -100,8 +100,8 @@ int main(int argc, char** argv)
 	dim3 numBlocks( (image->width) / threadsPerBlock.x, (image->height) / threadsPerBlock.y );
 	
 	/* Run smooth */
-	if (grayscale) smooth_grs<<<numBlocks, threadsPerBlock>>>(pa, 2, image->width, image->height);
-	else smooth_rgb<<<numBlocks, threadsPerBlock>>>(pa, 2, image->width, image->height);
+	if (grayscale) smooth_grs<<<numBlocks, threadsPerBlock>>>(d_pixels_in, d_pixels_out, image->width, image->height);
+	else smooth_rgb<<<numBlocks, threadsPerBlock>>>(d_pixels_in, d_pixels_out, image->width, image->height);
 
 	/* Get time end */
 	gettimeofday(&t_end, NULL);
@@ -111,7 +111,7 @@ int main(int argc, char** argv)
 	fprintf(stderr, "%ld.%06ld\n", t_diff.tv_sec, t_diff.tv_usec);
 
 	/* Copy results */
-	cudaMemCopy(gpixels, d_pixels_out, size, cudaMemcpyDeviceToHost);
+	cudaMemcpy(gpixels, d_pixels_out, size, cudaMemcpyDeviceToHost);
 
 	/* Write resulting image */
 	write_ppm("out.ppm",image,RGB);
@@ -197,6 +197,7 @@ __global__ void smooth_rgb(PIXEL* in, PIXEL* out, int width, int height){
 	if( i >= width || j >= height )
 		return;
 
+	int k, l;
 	int red, green, blue;
 	red = green = blue = 0;
 	for (k = -2; k <= 2; k++){
@@ -220,6 +221,7 @@ __global__ void smooth_grs(PIXEL* pixel,int n, int width, int height){
 	if( i >= width || j >= height )
 		return;
 
+	int k, l;
 	int mean = 0;
 	for (k = -2; k <= 2; k++){
 		for (l = -2; l <= 2; l++){
