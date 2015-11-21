@@ -97,7 +97,7 @@ int main(int argc, char** argv)
 	cudaMalloc(&d_pixels_out, size);
 
 	/* Setup blocks and threads */
-	dim3 threadsPerBlock( 32, 32 );
+	dim3 threadsPerBlock( 6, 24 );
 	dim3 numBlocks( (image->width) / threadsPerBlock.x, (image->height) / threadsPerBlock.y );
 	
 	/* Run smooth */
