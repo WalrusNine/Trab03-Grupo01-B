@@ -168,7 +168,7 @@ IMAGE* read_ppm_image()
 	fscanf(fp, "%*d\n");
 
 	/* Create Image */
-	IMAGE* image 	= malloc(sizeof(IMAGE));
+	IMAGE* image	= (IMAGE*)malloc(sizeof(IMAGE));
 	image->width 	= width;
 	image->height 	= height;
 	image->pixel 	= (PIXEL *)malloc(width*height*sizeof(PIXEL));
