@@ -62,8 +62,8 @@ IMAGE* read_ppm_image();
 void write_ppm(const char *,IMAGE*,int);
 void delete_image(IMAGE**);
 
-void smooth_grs(PIXEL*,int, int, int);
-void smooth_rgb(PIXEL*,int, int, int);
+__global__ void smooth_grs(PIXEL*,int, int, int);
+__global__ void smooth_rgb(PIXEL*,int, int, int);
 
 int timeval_subtract(struct timeval*, struct timeval*, struct timeval*);
 
@@ -121,8 +121,6 @@ int main(int argc, char** argv)
 
 	cudaFree(d_pixels_in);
 	cudaFree(d_pixels_out);
-
-	free(h_pixels_out);
 	
 	return EXIT_SUCCESS;
 }
@@ -204,17 +202,17 @@ __global__ void smooth_rgb(PIXEL* in, PIXEL* out, int width, int height){
 		for (l = -2; l <= 2; l++){
 			if (i+k >= 0 && i+k < width && j+l >= 0 && j+l < height){
 				red += in->rgb.r;
-				gre += in->rgb.g;
-				blu += in->rgb.b;
+				green += in->rgb.g;
+				blue += in->rgb.b;
 			}
 		}
 	}
 	out->rgb.r = (red / 25);
-	out->rgb.g = (gre / 25);
-	out->rgb.b = (blu / 25);
+	out->rgb.g = (green / 25);
+	out->rgb.b = (blue / 25);
 }
 
-__global__ void smooth_grs(PIXEL* pixel,int n, int width, int height){
+__global__ void smooth_grs(PIXEL* in, PIXEL* out, int width, int height){
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;
 	
@@ -249,10 +247,10 @@ void write_ppm(const char *fname,IMAGE* image,int m){
 
 	/* Pixel data */
 	int i, j;
-	for (j = 0; j < image->height; j++){
-		for (i = 0; i < image->width; i++){
+	for (j = 0; j < height; j++){
+		for (i = 0; i < width; i++){
 			if (grayscale){
-				fwrite(&(((image->pixel)[j*image->width + i]).grs.i), sizeof(unsigned char),1, fp);
+				fwrite(&(((image->pixel)[j*width + i]).grs.i), sizeof(unsigned char),1, fp);
 			} else{
 				fwrite(&(image->pixel[j*width + i].rgb.r), sizeof(unsigned char),1, fp);
 				fwrite(&(image->pixel[j*width + i].rgb.g), sizeof(unsigned char),1, fp);
