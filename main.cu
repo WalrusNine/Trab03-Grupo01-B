@@ -62,8 +62,8 @@ IMAGE* read_ppm_image();
 void write_ppm(const char *,IMAGE*,int);
 void delete_image(IMAGE**);
 
-__global__ void smooth_grs(PIXEL*,int, int, int);
-__global__ void smooth_rgb(PIXEL*,int, int, int);
+__global__ void smooth_grs(PIXEL*,PIXEL*, int, int);
+__global__ void smooth_rgb(PIXEL*,PIXEL*, int, int);
 
 int timeval_subtract(struct timeval*, struct timeval*, struct timeval*);
 
@@ -80,6 +80,7 @@ int main(int argc, char** argv)
 
 	/* Read image */	
 	image = read_ppm_image();
+	gpixels = image->pixel;
 
 	/* Get time start */
 	gettimeofday(&t_begin, NULL);
