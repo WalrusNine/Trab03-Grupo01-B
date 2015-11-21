@@ -112,7 +112,7 @@ int main(int argc, char** argv)
 	fprintf(stderr, "%ld.%06ld\n", t_diff.tv_sec, t_diff.tv_usec);
 
 	/* Copy results */
-	cudaMemcpy(gpixels, d_pixels_out, size, cudaMemcpyDeviceToHost);
+	cudaMemcpy(image->pixel, d_pixels_out, size, cudaMemcpyDeviceToHost);
 
 	/* Write resulting image */
 	write_ppm("out.ppm",image,RGB);
@@ -202,15 +202,15 @@ __global__ void smooth_rgb(PIXEL* in, PIXEL* out, int width, int height){
 	for (k = -2; k <= 2; k++){
 		for (l = -2; l <= 2; l++){
 			if (i+k >= 0 && i+k < width && j+l >= 0 && j+l < height){
-				red += in->rgb.r;
-				green += in->rgb.g;
-				blue += in->rgb.b;
+				red 	+= in[(j+l)*width + (i+k)].rgb.r;
+				green 	+= in[(j+l)*width + (i+k)].rgb.g;
+				blue 	+= in[(j+l)*width + (i+k)].rgb.b;
 			}
 		}
 	}
-	out->rgb.r = (red / 25);
-	out->rgb.g = (green / 25);
-	out->rgb.b = (blue / 25);
+	out[(j)*width + (i)].rgb.r = (red / 25);
+	out[(j)*width + (i)].rgb.g = (green / 25);
+	out[(j)*width + (i)].rgb.b = (blue / 25);
 }
 
 __global__ void smooth_grs(PIXEL* in, PIXEL* out, int width, int height){
@@ -225,11 +225,11 @@ __global__ void smooth_grs(PIXEL* in, PIXEL* out, int width, int height){
 	for (k = -2; k <= 2; k++){
 		for (l = -2; l <= 2; l++){
 			if (i+k >= 0 && i+k < width && j+l >= 0 && j+l < height){
-				mean += in->grs.i;
+				mean += in[(j+l)*width + (i+k)].grs.i;
 			}
 		}
 	}
-	out->grs.i = (mean / 25);
+	out[(j)*width + (i)].grs.i = (mean / 25);
 }
 
 void write_ppm(const char *fname,IMAGE* image,int m){
