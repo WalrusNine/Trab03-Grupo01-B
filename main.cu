@@ -97,11 +97,15 @@ int main(int argc, char** argv)
 	int max_value = 32;
 	int optimal_x = 1, optimal_y = 1;
 
+	printf("Here.\n");
+
 	int i;
-	for (i = max_value; i >= 0; --i){
+	for (i = max_value; i >= 1; --i){
 		if (image->width % i == 0 && optimal_x < i)	optimal_x = i;
 		if (image->height % i == 0 && optimal_y < i)	optimal_y = i;
 	}
+
+	printf("X: %d, Y: %d\n", optimal_x, optimal_y);
 
 	/* Setup blocks and threads */
 	dim3 n_threads (optimal_x, optimal_y);
