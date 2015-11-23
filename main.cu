@@ -79,11 +79,8 @@ int main(int argc, char** argv)
 	struct timeval t_begin, t_end, t_diff;
 
 	/* Read image */	
-	image = read_ppm_image();
+	image 	= read_ppm_image();
 	gpixels = image->pixel;
-
-	/* Get time start */
-	gettimeofday(&t_begin, NULL);
 
 	/* Size */
 	size_t size = (image->width)*(image->height)*sizeof(PIXEL);
@@ -96,13 +93,26 @@ int main(int argc, char** argv)
 	PIXEL* d_pixels_out;
 	cudaMalloc(&d_pixels_out, size);
 
+	/* Get best size */
+	int max_value = 32;
+	int optimal_x = 1, optimal_y = 1;
+
+	int i;
+	for (i = max_value; i >= 0; --i){
+		if (image->width % i == 0 && optimal_x < i)	optimal_x = i;
+		if (image->height % i == 0 && optimal_y < i)	optimal_y = i;
+	}
+
 	/* Setup blocks and threads */
-	dim3 threadsPerBlock( 6, 24 );
-	dim3 numBlocks( (image->width) / threadsPerBlock.x, (image->height) / threadsPerBlock.y );
+	dim3 n_threads (optimal_x, optimal_y);
+	dim3 n_blocks( (image->width) / n_threads.x, (image->height) / n_threads.y);
+
+	/* Get time start */
+	gettimeofday(&t_begin, NULL);
 	
 	/* Run smooth */
-	if (grayscale) smooth_grs<<<numBlocks, threadsPerBlock>>>(d_pixels_in, d_pixels_out, image->width, image->height);
-	else smooth_rgb<<<numBlocks, threadsPerBlock>>>(d_pixels_in, d_pixels_out, image->width, image->height);
+	if (grayscale) smooth_grs<<<n_blocks, n_threads>>>(d_pixels_in, d_pixels_out, image->width, image->height);
+	else smooth_rgb<<<n_blocks, n_threads>>>(d_pixels_in, d_pixels_out, image->width, image->height);
 
 	/* Get time end */
 	gettimeofday(&t_end, NULL);
