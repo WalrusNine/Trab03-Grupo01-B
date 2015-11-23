@@ -94,10 +94,8 @@ int main(int argc, char** argv)
 	cudaMalloc(&d_pixels_out, size);
 
 	/* Get best size */
-	int max_value = 32;
+	int max_value = 64;
 	int optimal_x = 1, optimal_y = 1;
-
-	printf("Here.\n");
 
 	int i;
 	for (i = max_value; i >= 1; --i){
@@ -105,7 +103,7 @@ int main(int argc, char** argv)
 		if (image->height % i == 0 && optimal_y < i)	optimal_y = i;
 	}
 
-	printf("X: %d, Y: %d\n", optimal_x, optimal_y);
+	fprintf(stderr, "X: %d, Y: %d\n", optimal_x, optimal_y);
 
 	/* Setup blocks and threads */
 	dim3 n_threads (optimal_x, optimal_y);
