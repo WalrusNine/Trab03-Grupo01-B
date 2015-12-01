@@ -13,13 +13,6 @@
 #include <stdio.h>
 #include <sys/time.h>
 
-#define RGB 0
-#define RBG 1
-#define GRB 2
-#define GBR 3
-#define BRG 4 
-#define BGR 5
-
 /*
 **	Image is stored in an array of PIXELs,
 **	which have red, green and blue values
@@ -59,13 +52,13 @@ typedef struct image{
 
 /* Prototypes */
 IMAGE* read_ppm_image();
-void write_ppm(const char *,IMAGE*,int);
+void write_ppm(const char *,IMAGE*);
 void delete_image(IMAGE**);
 
 __global__ void smooth_grs(PIXEL*,PIXEL*, int, int);
 __global__ void smooth_rgb(PIXEL*,PIXEL*, int, int);
 
-int timeval_subtract(struct timeval*, struct timeval*, struct timeval*);
+int timespec_subtract(struct timespec*, struct timespec*, struct timespec*);
 
 /* Globals */
 int grayscale = 0;
@@ -76,7 +69,7 @@ int main(int argc, char** argv)
 	PIXEL*	gpixels;
 
 	/* Time variables */
-	struct timeval t_begin, t_end, t_diff;
+	struct timespec t_begin, t_end, t_diff;
 
 	/* Read image */	
 	image 	= read_ppm_image();
@@ -110,24 +103,24 @@ int main(int argc, char** argv)
 	dim3 n_blocks( (image->width) / n_threads.x, (image->height) / n_threads.y);
 
 	/* Get time start */
-	gettimeofday(&t_begin, NULL);
+	clock_gettime(CLOCK_REALTIME, &t_begin);
 	
 	/* Run smooth */
 	if (grayscale) smooth_grs<<<n_blocks, n_threads>>>(d_pixels_in, d_pixels_out, image->width, image->height);
 	else smooth_rgb<<<n_blocks, n_threads>>>(d_pixels_in, d_pixels_out, image->width, image->height);
 
 	/* Get time end */
-	gettimeofday(&t_end, NULL);
+	clock_gettime(CLOCK_REALTIME, &t_end);
 
 	/* Get diff time and print in stderr */
-	timeval_subtract(&t_diff, &t_end, &t_begin);
-	fprintf(stderr, "%ld.%06ld\n", t_diff.tv_sec, t_diff.tv_usec);
+	timespec_subtract(&t_diff, &t_end, &t_begin);
+	fprintf(stderr, "%ld.%06ld\n", t_diff.tv_sec, t_diff.tv_nsec);
 
 	/* Copy results */
 	cudaMemcpy(image->pixel, d_pixels_out, size, cudaMemcpyDeviceToHost);
 
 	/* Write resulting image */
-	write_ppm("out.ppm",image,RGB);
+	write_ppm("out.ppm",image);
 
 	/* Free memory */
 	delete_image(&image);
@@ -244,7 +237,7 @@ __global__ void smooth_grs(PIXEL* in, PIXEL* out, int width, int height){
 	out[(j)*width + (i)].grs.i = (mean / 25);
 }
 
-void write_ppm(const char *fname,IMAGE* image,int m){
+void write_ppm(const char *fname,IMAGE* image){
 	FILE *fp = fopen(fname, "wb");
 	
 	/* Put header */
@@ -290,11 +283,11 @@ void delete_image(IMAGE** image){
 */
 
 /* Return 1 if the difference is negative, otherwise 0.  */
-int timeval_subtract(struct timeval *result, struct timeval *t2, struct timeval *t1)
+int timespec_subtract(struct timespec *result, struct timespec *t2, struct timespec *t1)
 {
-	long int diff = (t2->tv_usec + 1000000 * t2->tv_sec) - (t1->tv_usec + 1000000 * t1->tv_sec);
-	result->tv_sec = diff / 1000000;
-	result->tv_usec = diff % 1000000;
+	long int diff = (t2->tv_nsec + 1000000000L * t2->tv_sec) - (t1->tv_nsec + 1000000000L * t1->tv_sec);
+	result->tv_sec = diff / 1000000000L;
+	result->tv_nsec = diff % 1000000000L;
 
 	return (diff<0);
 }
