@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <sys/time.h>
 
+#define CLOCK_REALTIME 0
+
 /*
 **	Image is stored in an array of PIXELs,
 **	which have red, green and blue values
